@@ -33,4 +33,8 @@ class Product extends Model
     {
         return $this->quantity <= $this->minimum_quantity;
     }
+    public function supplier()
+    {
+        return $this->belongsTo(Supplier::class);
+    }
 }

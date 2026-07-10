@@ -22,9 +22,11 @@ class StockInRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_id' => 'required|exists:products,id',
-            'quantity'   => 'required|integer|min:1',
-            'notes'      => 'nullable|string',
-        ];
+        'product_id'   => 'required|exists:products,id',
+        'quantity'     => 'required|integer|min:1',
+        'notes'        => 'nullable|string',
+        'reference_type' => 'required|in:Supplier,Internal',
+        'reference_id'   => 'required|integer',
+    ];
     }
 }

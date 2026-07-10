@@ -26,6 +26,8 @@ class StockOutRequest extends FormRequest
             'quantity'   => 'required|integer|min:1',
             'type'       => 'required|in:out,adjustment', // out إخراج عادي، adjustment جرد/تالف
             'notes'      => 'nullable|string',
+            'reference_type' => 'required|in:Customer,Internal',
+            'reference_id'   => 'required|integer',
         ];
     }
 }

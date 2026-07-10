@@ -53,4 +53,16 @@ public function createdCustomers()
 {
     return $this->hasMany(Customer::class, 'created_by');
 }
+public function createdCategories()
+{
+    return $this->hasMany(Category::class, 'created_by');
+}
+public function createdProducts()
+{
+    return $this->hasMany(Product::class, 'created_by');
+}
+public function stockMovements()
+{
+    return $this->hasMany(StockMovement::class, 'created_by');
+}
 }

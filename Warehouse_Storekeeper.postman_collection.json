@@ -1,0 +1,298 @@
+{
+  "info": {
+    "name": "Warehouse - Storekeeper APIs",
+    "description": "مسارات أمين المستودع: الأصناف، المنتجات، وحركات المخزون.\n\nطريقة الاستخدام:\n1. شغّل MySQL من XAMPP ثم: php artisan serve\n2. نفّذ طلب (Login) أولاً — التوكن ينحفظ تلقائياً ولا تحتاج تنسخه\n3. جرّب الطلبات بالترتيب: صنف ← منتج ← حركات مخزون",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "base_url", "value": "http://127.0.0.1:8000/api" },
+    { "key": "token", "value": "" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "1 - Auth (المصادقة)",
+      "item": [
+        {
+          "name": "Login - تسجيل دخول (أدمن)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "// حفظ التوكن تلقائياً بعد تسجيل الدخول",
+                  "var json = pm.response.json();",
+                  "if (json.Token) { pm.collectionVariables.set('token', json.Token); }"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"jadAli@gmail.com\",\n  \"password\": \"12345678\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/login", "host": ["{{base_url}}"], "path": ["login"] }
+          }
+        },
+        {
+          "name": "Logout - تسجيل خروج",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/logout", "host": ["{{base_url}}"], "path": ["logout"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "2 - Categories (الأصناف)",
+      "item": [
+        {
+          "name": "عرض كل الأصناف",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/categories", "host": ["{{base_url}}"], "path": ["categories"] }
+          }
+        },
+        {
+          "name": "إضافة صنف",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"محركات كهربائية\",\n  \"description\": \"محركات صناعية بمختلف القدرات\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/categories", "host": ["{{base_url}}"], "path": ["categories"] }
+          }
+        },
+        {
+          "name": "تفاصيل صنف مع منتجاته",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/categories/1", "host": ["{{base_url}}"], "path": ["categories", "1"] }
+          }
+        },
+        {
+          "name": "تعديل صنف",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"محركات وقطع كهربائية\",\n  \"description\": \"محركات صناعية وقطع غيارها\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/categories/1", "host": ["{{base_url}}"], "path": ["categories", "1"] }
+          }
+        },
+        {
+          "name": "حذف صنف (Admin فقط)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/categories/1", "host": ["{{base_url}}"], "path": ["categories", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3 - Products (المنتجات)",
+      "item": [
+        {
+          "name": "عرض كل المنتجات",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/products", "host": ["{{base_url}}"], "path": ["products"] }
+          }
+        },
+        {
+          "name": "بحث وفلترة المنتجات",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/products?search=محرك&category_id=1&status=active",
+              "host": ["{{base_url}}"],
+              "path": ["products"],
+              "query": [
+                { "key": "search", "value": "محرك", "description": "بحث بالاسم أو SKU أو الباركود" },
+                { "key": "category_id", "value": "1", "description": "فلترة حسب الصنف" },
+                { "key": "status", "value": "active", "description": "active أو inactive" },
+                { "key": "low_stock", "value": "1", "description": "فعّلها لعرض المنتجات اللي وصلت للحد الأدنى فقط", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "إضافة منتج (بكمية افتتاحية)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"category_id\": 1,\n  \"name\": \"محرك كهربائي 5HP - ABB\",\n  \"sku\": \"MTR-ABB-5HP\",\n  \"barcode\": \"6291041500213\",\n  \"description\": \"محرك ثلاثي الطور 380 فولت\",\n  \"quantity\": 50,\n  \"minimum_quantity\": 10,\n  \"status\": \"active\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/products", "host": ["{{base_url}}"], "path": ["products"] }
+          }
+        },
+        {
+          "name": "تفاصيل منتج (آخر حركاته + تنبيه الحد الأدنى)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/products/1", "host": ["{{base_url}}"], "path": ["products", "1"] }
+          }
+        },
+        {
+          "name": "تعديل منتج (بدون الكمية!)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"محرك كهربائي 5HP - ABB (معدل)\",\n  \"barcode\": \"6291041500299\",\n  \"minimum_quantity\": 15,\n  \"status\": \"active\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/products/1", "host": ["{{base_url}}"], "path": ["products", "1"] }
+          }
+        },
+        {
+          "name": "حذف منتج (Admin فقط)",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": { "raw": "{{base_url}}/products/1", "host": ["{{base_url}}"], "path": ["products", "1"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4 - Stock Movements (حركات المخزون)",
+      "item": [
+        {
+          "name": "سجل الحركات",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{base_url}}/stock/history",
+              "host": ["{{base_url}}"],
+              "path": ["stock", "history"],
+              "query": [
+                { "key": "product_id", "value": "1", "description": "فلترة حسب منتج معين", "disabled": true },
+                { "key": "type", "value": "in", "description": "in أو out أو adjustment", "disabled": true },
+                { "key": "from_date", "value": "2026-07-01", "description": "من تاريخ", "disabled": true },
+                { "key": "to_date", "value": "2026-07-31", "description": "إلى تاريخ", "disabled": true }
+              ]
+            }
+          }
+        },
+        {
+          "name": "إدخال بضاعة (وارد)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": 1,\n  \"quantity\": 30,\n  \"notes\": \"استلام بضاعة من المورد\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/stock/move-in", "host": ["{{base_url}}"], "path": ["stock", "move-in"] }
+          }
+        },
+        {
+          "name": "إخراج بضاعة (صادر)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": 1,\n  \"quantity\": 25,\n  \"type\": \"out\",\n  \"notes\": \"صرف داخلي لقسم الصيانة\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/stock/move-out", "host": ["{{base_url}}"], "path": ["stock", "move-out"] }
+          }
+        },
+        {
+          "name": "تسجيل بضاعة تالفة (جرد)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": 1,\n  \"quantity\": 3,\n  \"type\": \"adjustment\",\n  \"notes\": \"بضاعة تالفة - كسر أثناء النقل\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/stock/move-out", "host": ["{{base_url}}"], "path": ["stock", "move-out"] }
+          }
+        },
+        {
+          "name": "تجربة كمية غير كافية (لازم يرجع 422)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"product_id\": 1,\n  \"quantity\": 99999,\n  \"type\": \"out\",\n  \"notes\": \"تجربة الرفض\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/stock/move-out", "host": ["{{base_url}}"], "path": ["stock", "move-out"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5 - Admin (إدارة الموظفين)",
+      "item": [
+        {
+          "name": "إضافة موظف Storekeeper",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "Accept", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Ahmad\",\n  \"last_name\": \"Almohammad\",\n  \"email\": \"ahmad.store@gmail.com\",\n  \"password\": \"12345678\",\n  \"role\": \"Storekeeper\",\n  \"shift_type\": \"morning\"\n}"
+            },
+            "url": { "raw": "{{base_url}}/add/staff/admin", "host": ["{{base_url}}"], "path": ["add", "staff", "admin"] }
+          }
+        }
+      ]
+    }
+  ]
+}

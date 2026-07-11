@@ -16,4 +16,15 @@ class Supplier extends Model
     {
         return $this->hasMany(Product::class);
     }
+
+    public function purchaseOrders()
+    {
+        return $this->hasMany(PurchaseOrder::class);
+    }
+
+    // الحركات المالية للمورد (فواتير شراء وسندات صرف)
+    public function financialTransactions()
+    {
+        return $this->morphMany(FinancialTransaction::class, 'financialable');
+    }
 }

@@ -3,7 +3,12 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CustomerController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\FinancialTransactionController;
 use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PurchaseOrderController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SalesOrderController;
 use App\Http\Controllers\StaffController;
 use App\Http\Controllers\StockMovementController;
 use App\Http\Controllers\SupplierController;
@@ -36,6 +41,10 @@ Route::middleware(['auth:sanctum', 'role:Admin'])->group(function () {
     //bashar
     Route::delete('/suppliers/{id}', [SupplierController::class, 'destroy']);
     Route::delete('/customers/{id}', [CustomerController::class, 'destroy']);
+
+    Route::delete('/sales-orders/{id}', [SalesOrderController::class, 'destroy']);       // حذف فاتورة بيع
+    Route::delete('/purchase-orders/{id}', [PurchaseOrderController::class, 'destroy']); // حذف فاتورة شراء
+    Route::delete('/documents/{id}', [DocumentController::class, 'destroy']);            // حذف مستند
 });
 
 /*
@@ -74,4 +83,59 @@ Route::middleware(['auth:sanctum', 'role:Storekeeper|Admin'])->group(function ()
     Route::post('/customers', [CustomerController::class, 'store']);         // إضافة عميل جديد
     Route::get('/customers/{id}', [CustomerController::class, 'show']);       // تفاصيل العميل
     Route::put('/customers/{id}', [CustomerController::class, 'update']);     // تعديل بيانات العميل
+
+    // ------ فواتير البيع (Sales Orders) ------
+    Route::get('/sales-orders', [SalesOrderController::class, 'index']);            // عرض مع فلاتر (العميل، الحالة، التاريخ)
+    Route::post('/sales-orders', [SalesOrderController::class, 'store']);           // إنشاء فاتورة بيع (pending)
+    Route::get('/sales-orders/{id}', [SalesOrderController::class, 'show']);        // تفاصيل الفاتورة مع أسطرها ومستنداتها
+    Route::post('/sales-orders/{id}/confirm', [SalesOrderController::class, 'confirm']); // تأكيد: صرف من المخزون + دين على العميل
+    Route::post('/sales-orders/{id}/cancel', [SalesOrderController::class, 'cancel']);   // إلغاء فاتورة معلقة
+
+    // ------ فواتير الشراء (Purchase Orders) ------
+    Route::get('/purchase-orders', [PurchaseOrderController::class, 'index']);            // عرض مع فلاتر (المورد، الحالة، التاريخ)
+    Route::post('/purchase-orders', [PurchaseOrderController::class, 'store']);           // إنشاء فاتورة شراء (pending)
+    Route::get('/purchase-orders/{id}', [PurchaseOrderController::class, 'show']);        // تفاصيل الفاتورة مع أسطرها ومستنداتها
+    Route::post('/purchase-orders/{id}/confirm', [PurchaseOrderController::class, 'confirm']); // تأكيد الاستلام: إدخال للمخزون + دين للمورد
+    Route::post('/purchase-orders/{id}/cancel', [PurchaseOrderController::class, 'cancel']);   // إلغاء فاتورة معلقة
+
+    // ------ المستندات (Documents) ------
+    Route::post('/documents', [DocumentController::class, 'store']);             // رفع مستند مربوط بفاتورة بيع أو شراء
+    Route::get('/documents/{id}/download', [DocumentController::class, 'download']); // تحميل المستند
+});
+
+/*
+|--------------------------------------------------------------------------
+| مسارات المحاسب (Accountant) - يشاركه الأدمن بكل الصلاحيات
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:sanctum', 'role:Accountant|Admin'])->group(function () {
+
+    // ------ الحركات المالية (Financial Transactions) ------
+    Route::get('/finance/transactions', [FinancialTransactionController::class, 'index']);  // سجل الحركات المالية مع فلاتر
+    Route::post('/finance/transactions', [FinancialTransactionController::class, 'store']); // تسجيل سند قبض (عميل) أو سند صرف (مورد)
+
+    // ------ كشوف الحسابات (Statements) ------
+    Route::get('/finance/statement/customer/{id}', [FinancialTransactionController::class, 'customerStatement']); // كم لنا عند العميل؟
+    Route::get('/finance/statement/supplier/{id}', [FinancialTransactionController::class, 'supplierStatement']); // كم علينا للمورد؟
+});
+
+/*
+|--------------------------------------------------------------------------
+| مسارات مدير المستودع (Warehouse Manager) - يشاركه الأدمن بكل الصلاحيات
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth:sanctum', 'role:Warehouse Manager|Admin'])->group(function () {
+
+    // ------ لوحة القيادة (Dashboard) ------
+    Route::get('/dashboard', [ReportController::class, 'dashboard']); // إحصائيات اليوم + بيانات الرسوم البيانية
+
+    // ------ التقارير المتقدمة (Reports) ------
+    Route::get('/reports/inventory', [ReportController::class, 'inventory']);                        // جرد المخزون
+    Route::get('/reports/low-stock', [ReportController::class, 'lowStock']);                         // المنتجات تحت الحد الأدنى
+    Route::get('/reports/stagnant-products', [ReportController::class, 'stagnantProducts']);         // الأصناف الراكدة (?days=30)
+    Route::get('/reports/stock-movements-summary', [ReportController::class, 'stockMovementsSummary']); // ملخص الوارد والصادر لكل منتج
+    Route::get('/reports/suppliers-performance', [ReportController::class, 'suppliersPerformance']); // أداء الموردين
+    Route::get('/reports/top-selling-products', [ReportController::class, 'topSellingProducts']);    // الأكثر مبيعاً
 });
